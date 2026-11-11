@@ -70,6 +70,10 @@ $ uv run ruff check . && uv run mypy app
 All checks passed! / Success: no issues found in 16 source files
 ```
 
+CI run: <https://github.com/supremeyuma/hookrelay/actions/runs/43108810431> — green in 56s
+(all steps, including the Docker build). Compose reported the API healthy about 8s after the
+image build; Postgres and Redis were healthy before it started.
+
 Example structured log line:
 
 ```json
