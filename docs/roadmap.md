@@ -13,7 +13,7 @@ Update this file at every phase gate. A checked box means verified, not "written
 - [x] `scripts/verify.ps1`
 - [x] Package smoke test
 - [x] Initial commit
-- [ ] Private GitHub remote created and pushed
+- [x] Private GitHub remote created and pushed
 
 **Evidence**
 
@@ -25,8 +25,14 @@ $ uv run ruff check .
 All checks passed!
 
 $ uv run mypy app
-Success: no issues found
+Success: no issues found in 7 source files
+
+$ ./scripts/verify.ps1
+ALL CHECKS PASSED
 ```
+
+Remote: <https://github.com/supremeyuma/hookrelay> (private). Initial push: 3 commits
+(`435c821`, `f6002f1`, `58874d6`) on `main`.
 
 ## H1 — Skeleton, config, health, compose, CI (M0)
 
