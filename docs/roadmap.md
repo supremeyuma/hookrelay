@@ -36,14 +36,46 @@ Remote: <https://github.com/supremeyuma/hookrelay> (private). Initial push: 3 co
 
 ## H1 — Skeleton, config, health, compose, CI (M0)
 
-- [ ] Settings, structured logging, request IDs
-- [ ] DB and Redis clients, lifespan
-- [ ] `/healthz`, `/readyz`
-- [ ] Compose (api, postgres, redis) + multi-stage Dockerfile
-- [ ] Alembic wired, baseline revision
-- [ ] CI: ruff, mypy, pytest, docker build
+- [x] Settings, structured logging, request IDs
+- [x] DB and Redis clients, lifespan
+- [x] `/healthz`, `/readyz`
+- [x] Compose (api, postgres, redis) + multi-stage Dockerfile
+- [x] Alembic wired, baseline revision
+- [x] CI: ruff, mypy, pytest, docker build
 
-**Gate evidence:** _pending_
+**Gate evidence**
+
+```
+$ docker compose ps
+hookrelay-api-1        Up (healthy)   0.0.0.0:8000->8000/tcp
+hookrelay-postgres-1   Up (healthy)   0.0.0.0:5432->5432/tcp
+hookrelay-redis-1      Up (healthy)   0.0.0.0:6379->6379/tcp
+
+GET /healthz  200 {"status":"ok"}
+GET /readyz   200 {"status":"ok","db":"ok","redis":"ok"}
+GET /healthz  X-Request-ID: cfae0b2c-aeec-4271-902a-ae12f9fc576c
+
+Redis stopped  -> GET /readyz 503
+Redis started  -> GET /readyz 200
+
+$ uv run alembic upgrade head
+Running upgrade  -> 0001, baseline
+$ uv run alembic current
+0001 (head)
+
+$ uv run pytest --cov=app
+18 passed; coverage 86.71%
+
+$ uv run ruff check . && uv run mypy app
+All checks passed! / Success: no issues found in 16 source files
+```
+
+Example structured log line:
+
+```json
+{"ts":"2026-11-11T22:04:43.013308+00:00","level":"INFO","logger":"app.core.middleware","msg":"request_completed","request_id":"d72a36a1-f83e-49c2-b05b-d0761ca6f9bb","method":"GET","path":"/healthz","status_code":200,"duration_ms":0.22}
+```
+
 
 ## H2 — Ingest, HMAC, idempotency (M1)
 
