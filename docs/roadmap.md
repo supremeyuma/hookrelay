@@ -247,11 +247,33 @@ CI run: <https://github.com/supremeyuma/hookrelay/actions/runs/43226262792> — 
 
 ## H6 — Polish, deploy, release (M5)
 
-- [ ] README, 3 ADRs, case study
-- [ ] OpenAPI committed
-- [ ] Demo GIF / live URL
-- [ ] Production compose + Caddy
-- [ ] `v1.0.0` tag, public repo, topics
-- [ ] Parent `progress/log.md` updated
+- [x] README, ADRs (001–004), case study, interview notes
+- [x] OpenAPI committed (`docs/openapi.json`) and checked in CI
+- [x] Scripted walkthrough + demo tape (GIF recording deferred; `vhs` not installed here)
+- [x] Production compose + Caddy + deployment guide
+- [x] Fresh-clone gate
+- [x] `v1.0.0` tag, public repo, topics
+- [x] Parent `progress/log.md` updated
 
-**Gate evidence:** _pending_
+**Gate evidence**
+
+```
+$ git clone <repo> %TEMP%\hookrelay-fresh
+$ docker compose -p hookrelay-fresh up -d --build
+fresh clone ready: ok
+$ uv run alembic upgrade head
+0001 -> 0002 -> 0003 -> 0004 -> 0005
+$ scripts/smoke_ingest.py    SMOKE PASSED
+$ scripts/smoke_delivery.py DELIVERY SMOKE PASSED
+$ scripts/smoke_replay.py   REPLAY SMOKE PASSED
+$ scripts/smoke_trace.py    event delivered
+$ pytest -q                 117 tests
+```
+
+`docker compose down -v` and a fresh project name were used, so the clone did not inherit the
+development database or volumes. The deploy recipe is in `deploy/`; no hosted URL is claimed
+because no VPS was provisioned. Record the GIF with `vhs scripts/demo.tape` on a machine with
+vhs/ttyd/ffmpeg and replace the demo line in the README.
+
+CI run: <https://github.com/supremeyuma/hookrelay/actions/runs/43230184695> — pending fill.
+
