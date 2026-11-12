@@ -6,6 +6,7 @@ from typing import Annotated, Any
 
 from cryptography.fernet import InvalidToken
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from opentelemetry.propagate import inject
 from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -42,6 +43,12 @@ def _stored_headers(request: Request) -> dict[str, str]:
         for name, value in request.headers.items()
         if name.lower() not in _SENSITIVE_HEADERS
     }
+
+
+def _current_traceparent() -> str | None:
+    carrier: dict[str, str] = {}
+    inject(carrier)
+    return carrier.get("traceparent")
 
 
 @router.post(
@@ -185,7 +192,7 @@ async def ingest(
         )
         return IngestResponse(status="duplicate", event_id=existing_id)
 
-    session.add(Outbox(event_id=event_id, traceparent=request.headers.get("traceparent")))
+    session.add(Outbox(event_id=event_id, traceparent=_current_traceparent()))
     await session.commit()
 
     response.status_code = status.HTTP_202_ACCEPTED

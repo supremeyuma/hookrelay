@@ -40,6 +40,7 @@ class Delivery(Base):
     error_class: Mapped[str | None] = mapped_column(String(64), nullable=True)
     next_attempt_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     delivery_key: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    traceparent: Mapped[str | None] = mapped_column(String(128), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )

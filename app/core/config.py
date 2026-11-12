@@ -37,9 +37,15 @@ class Settings(BaseSettings):
     allow_private_destinations: bool = Field(default=False)
     delivery_max_attempts: int = Field(default=8, ge=1, le=20)
     delivery_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
+    db_pool_size: int = Field(default=5, ge=1, le=50)
+    db_max_overflow: int = Field(default=5, ge=0, le=50)
 
     otel_exporter_otlp_endpoint: str | None = Field(default=None)
     otel_service_name: str = Field(default="hookrelay")
+    otel_console_exporter: bool = Field(default=False)
+    worker_metrics_port: int = Field(default=9100, ge=1024, le=65535)
+    poller_metrics_port: int = Field(default=9101, ge=1024, le=65535)
+    metrics_refresh_seconds: float = Field(default=5.0, gt=0, le=60)
 
     @field_validator("secret_encryption_key")
     @classmethod

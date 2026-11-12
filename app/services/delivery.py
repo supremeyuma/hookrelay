@@ -3,6 +3,7 @@
 import json
 import logging
 import random
+import time
 import uuid
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
@@ -10,10 +11,15 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import httpx
+from opentelemetry import trace
+from opentelemetry.propagate import inject
+from opentelemetry.trace import SpanKind
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.crypto import SecretCipher
+from app.core.metrics import DELIVERY_ATTEMPTS, DELIVERY_DURATION, DLQ_TOTAL
 from app.core.security import compute_signature
 from app.models.dead_letter import DeadLetter
 from app.models.delivery import Delivery
@@ -65,10 +71,11 @@ def delivery_headers(
     secret: str,
     body: bytes,
     now: datetime,
+    traceparent: str | None = None,
 ) -> dict[str, str]:
     timestamp = int(now.timestamp())
     signature = compute_signature(secret, timestamp, body)
-    return {
+    headers = {
         "Content-Type": "application/json",
         "X-HookRelay-Event-Id": str(event_id),
         "X-HookRelay-Delivery-Key": str(delivery.delivery_key),
@@ -76,6 +83,9 @@ def delivery_headers(
         "X-HookRelay-Timestamp": str(timestamp),
         "X-HookRelay-Signature": f"t={timestamp},v1={signature}",
     }
+    if traceparent is not None:
+        headers["traceparent"] = traceparent
+    return headers
 
 
 async def refresh_event_status(session: AsyncSession, event: Event) -> str:
@@ -146,34 +156,61 @@ async def deliver_once(
 
     body = canonical_body(event.payload)
     secret = cipher.decrypt(destination.secret_encrypted)
-    headers = delivery_headers(
-        event_id=event.id,
-        delivery=delivery,
-        secret=secret,
-        body=body,
-        now=current_time,
-    )
 
+    parent_carrier: dict[str, str] = {}
+    if delivery.traceparent is not None:
+        parent_carrier["traceparent"] = delivery.traceparent
+    parent_context = TraceContextTextMapPropagator().extract(parent_carrier)
+
+    started = time.perf_counter()
     response: httpx.Response | None = None
     response_code: int | None = None
     response_text: str | None = None
     error_class: str | None = None
     outcome = Outcome.RETRYABLE
 
-    try:
-        response = await client.post(destination.url, content=body, headers=headers)
-    except httpx.TimeoutException:
-        error_class = "timeout"
-    except httpx.TransportError:
-        error_class = "connection_error"
-    except httpx.HTTPError:
-        error_class = "request_error"
-    else:
-        response_code = response.status_code
-        response_text = response.content.decode("utf-8", errors="replace")[:RESPONSE_BODY_LIMIT]
-        outcome = classify_status(response_code)
-        if outcome is not Outcome.SUCCESS:
-            error_class = error_class_for_status(response_code)
+    tracer = trace.get_tracer(__name__)
+    with tracer.start_as_current_span(
+        "hookrelay.deliver",
+        context=parent_context,
+        kind=SpanKind.PRODUCER,
+        attributes={
+            "hookrelay.event_id": str(event.id),
+            "hookrelay.destination_id": str(destination.id),
+            "hookrelay.attempt": delivery.attempt,
+        },
+    ) as span:
+        carrier: dict[str, str] = {}
+        inject(carrier)
+        headers = delivery_headers(
+            event_id=event.id,
+            delivery=delivery,
+            secret=secret,
+            body=body,
+            now=current_time,
+            traceparent=carrier.get("traceparent"),
+        )
+
+        try:
+            response = await client.post(destination.url, content=body, headers=headers)
+        except httpx.TimeoutException:
+            error_class = "timeout"
+        except httpx.TransportError:
+            error_class = "connection_error"
+        except httpx.HTTPError:
+            error_class = "request_error"
+        else:
+            response_code = response.status_code
+            response_text = response.content.decode("utf-8", errors="replace")[:RESPONSE_BODY_LIMIT]
+            outcome = classify_status(response_code)
+            if outcome is not Outcome.SUCCESS:
+                error_class = error_class_for_status(response_code)
+            span.set_attribute("http.response.status_code", response_code)
+
+        if error_class is not None:
+            span.set_attribute("hookrelay.error_class", error_class)
+
+    DELIVERY_DURATION.observe(time.perf_counter() - started)
 
     delivery.response_code = response_code
     delivery.response_body = response_text
@@ -197,6 +234,7 @@ async def deliver_once(
                 reason=error_class or "retry_exhausted",
             )
         )
+        DLQ_TOTAL.inc()
     else:
         delivery.status = "failed"
         retry_after = (
@@ -218,8 +256,19 @@ async def deliver_once(
                 status="pending",
                 next_attempt_at=next_attempt_at,
                 delivery_key=delivery.delivery_key,
+                traceparent=delivery.traceparent,
             )
         )
+
+    if outcome is Outcome.SUCCESS:
+        metric_result = "success"
+    elif delivery.status == "dead":
+        metric_result = "dead"
+    elif outcome is Outcome.PERMANENT:
+        metric_result = "permanent"
+    else:
+        metric_result = "retry"
+    DELIVERY_ATTEMPTS.labels(result=metric_result).inc()
 
     await session.flush()
     await refresh_event_status(session, event)
@@ -241,7 +290,7 @@ async def publish_outbox(
     session: AsyncSession,
     enqueue: Enqueue,
     *,
-    batch_size: int = 100,
+    batch_size: int = 500,
     now: datetime | None = None,
 ) -> int:
     """Expand unpublished outbox rows into pending deliveries and enqueue them."""
@@ -249,59 +298,75 @@ async def publish_outbox(
     created: list[uuid.UUID] = []
 
     try:
-        outbox_rows = (
-            await session.scalars(
-                select(Outbox)
+        rows = (
+            await session.execute(
+                select(Outbox, Event)
+                .join(Event, Outbox.event_id == Event.id)
                 .where(Outbox.published_at.is_(None))
                 .order_by(Outbox.created_at, Outbox.id)
                 .limit(batch_size)
-                .with_for_update(skip_locked=True)
+                .with_for_update(skip_locked=True, of=Outbox)
             )
         ).all()
+        if not rows:
+            await session.commit()
+            return 0
 
-        for row in outbox_rows:
-            row.published_at = current_time
-            event = await session.get(Event, row.event_id)
-            if event is None:
-                continue
+        event_ids = list({event.id for _, event in rows})
+        source_ids = list({event.source_id for _, event in rows})
 
-            destinations = (
-                await session.scalars(
-                    select(Destination)
-                    .where(
-                        Destination.source_id == event.source_id,
-                        Destination.active.is_(True),
+        destinations_by_source: dict[uuid.UUID, list[Destination]] = {}
+        for destination in (
+            await session.scalars(
+                select(Destination)
+                .where(
+                    Destination.source_id.in_(source_ids),
+                    Destination.active.is_(True),
+                )
+                .order_by(Destination.created_at)
+            )
+        ).all():
+            destinations_by_source.setdefault(destination.source_id, []).append(destination)
+
+        existing = {
+            (event_id, destination_id)
+            for event_id, destination_id in (
+                await session.execute(
+                    select(Delivery.event_id, Delivery.destination_id).where(
+                        Delivery.event_id.in_(event_ids),
+                        Delivery.attempt == 1,
                     )
-                    .order_by(Destination.created_at)
                 )
             ).all()
+        }
+
+        for outbox, event in rows:
+            outbox.published_at = current_time
+            destinations = destinations_by_source.get(event.source_id, [])
             if not destinations:
                 continue
 
             event.status = "delivering"
             for destination in destinations:
-                exists = await session.scalar(
-                    select(Delivery.id).where(
-                        Delivery.event_id == event.id,
-                        Delivery.destination_id == destination.id,
-                        Delivery.attempt == 1,
-                    )
-                )
-                if exists is not None:
+                if (event.id, destination.id) in existing:
                     continue
 
                 delivery = Delivery(
+                    id=uuid.uuid4(),
                     event_id=event.id,
                     destination_id=destination.id,
                     attempt=1,
                     status="pending",
                     next_attempt_at=current_time,
                     delivery_key=delivery_key(event.id, destination.id),
+                    traceparent=outbox.traceparent,
                 )
                 session.add(delivery)
-                await session.flush()
                 created.append(delivery.id)
+                existing.add((event.id, destination.id))
 
+        if created:
+            await session.flush()
         await session.commit()
     except Exception:
         await session.rollback()
@@ -323,7 +388,7 @@ async def enqueue_due_deliveries(
     session: AsyncSession,
     enqueue: Enqueue,
     *,
-    batch_size: int = 100,
+    batch_size: int = 500,
     now: datetime | None = None,
 ) -> int:
     """Re-enqueue pending deliveries whose next attempt is due.
