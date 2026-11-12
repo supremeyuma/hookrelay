@@ -1,0 +1,74 @@
+name: Load smoke
+
+on:
+  workflow_dispatch:
+    inputs:
+      vus:
+        description: "Virtual users"
+        default: "5"
+      duration:
+        description: "Duration (e.g. 15s)"
+        default: "15s"
+
+permissions:
+  contents: read
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: hookrelay
+          POSTGRES_PASSWORD: hookrelay
+          POSTGRES_DB: hookrelay
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U hookrelay -d hookrelay"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+asyncpg://hookrelay:hookrelay@localhost:5432/hookrelay
+      REDIS_URL: redis://localhost:6379/0
+      SECRET_ENCRYPTION_KEY: MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA=
+      ADMIN_API_KEY: load-smoke-admin-key-000000
+      LOG_LEVEL: WARNING
+      ALLOW_PRIVATE_DESTINATIONS: "true"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - name: Migrate
+        run: uv run alembic upgrade head
+      - name: Start API
+        run: |
+          uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log &
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:8000/healthz && break
+            sleep 1
+          done
+      - uses: grafana/setup-k6-action@v1
+      - name: Run k6
+        env:
+          ADMIN_KEY: load-smoke-admin-key-000000
+        run: |
+          k6 run --quiet \
+            -e BASE_URL=http://127.0.0.1:8000 \
+            -e ADMIN_KEY="$ADMIN_KEY" \
+            -e VUS="${{ github.event.inputs.vus }}" \
+            -e DURATION="${{ github.event.inputs.duration }}" \
+            load/ingest.js
