@@ -49,7 +49,7 @@ def clean_state(migrated_database: None) -> Iterator[None]:
 
 @pytest.fixture
 def admin_headers() -> dict[str, str]:
-    return {"X-Admin-Key": os.environ["ADMIN_API_KEY"]}
+    return {"X-API-Key": os.environ["ADMIN_API_KEY"]}
 
 
 @pytest.fixture

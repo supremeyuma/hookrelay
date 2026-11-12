@@ -123,7 +123,7 @@ async def test_successful_delivery_and_signed_headers(
     assert result.status == "success"
     assert await _event_status(db_session, event_id) == "delivered"
 
-    detail = client.get(f"/events/{event_id}")
+    detail = client.get(f"/events/{event_id}", headers=admin_headers)
     assert detail.status_code == 200
     attempts = detail.json()["attempts"]
     assert len(attempts) == 1

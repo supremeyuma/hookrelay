@@ -38,7 +38,7 @@ def _ingest(client: TestClient, slug: str, secret: str, key: str) -> Any:
 
 def test_admin_requires_key(client: TestClient) -> None:
     assert client.get("/admin/sources").status_code == 401
-    assert client.get("/admin/sources", headers={"X-Admin-Key": "wrong"}).status_code == 401
+    assert client.get("/admin/sources", headers={"X-API-Key": "wrong"}).status_code == 401
 
 
 def test_create_source_returns_secret_once(

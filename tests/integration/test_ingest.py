@@ -70,7 +70,7 @@ def test_valid_event_is_accepted(client: TestClient, admin_headers: dict[str, st
     assert payload["status"] == "accepted"
     assert response.headers["Location"] == f"/events/{payload['event_id']}"
 
-    detail = client.get(f"/events/{payload['event_id']}")
+    detail = client.get(f"/events/{payload['event_id']}", headers=admin_headers)
     assert detail.status_code == 200
     body = detail.json()
     assert body["payload"]["amount"] == 4200
@@ -104,7 +104,7 @@ def test_external_id_is_stored(client: TestClient, admin_headers: dict[str, str]
     response = post(client, source, extra_headers={"X-External-Id": "evt_ext_1"})
 
     assert response.status_code == 202
-    detail = client.get(f"/events/{response.json()['event_id']}").json()
+    detail = client.get(f"/events/{response.json()['event_id']}", headers=admin_headers).json()
     assert detail["external_id"] == "evt_ext_1"
 
 
@@ -221,7 +221,7 @@ def test_100_concurrent_duplicates_create_one_event(
     assert db_scalar("SELECT count(*) FROM outbox") == 1
 
 
-def test_unknown_event_is_404(client: TestClient) -> None:
-    response = client.get("/events/00000000-0000-0000-0000-000000000000")
+def test_unknown_event_is_404(client: TestClient, admin_headers: dict[str, str]) -> None:
+    response = client.get("/events/00000000-0000-0000-0000-000000000000", headers=admin_headers)
 
     assert response.status_code == 404
