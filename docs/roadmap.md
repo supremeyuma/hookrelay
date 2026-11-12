@@ -119,6 +119,9 @@ asserts a `429` with `Retry-After` for a 1 rps / burst 1 source.
 ADRs: [001-idempotency-scope](adr/001-idempotency-scope.md),
 [002-secret-storage](adr/002-secret-storage.md).
 
+CI run: <https://github.com/supremeyuma/hookrelay/actions/runs/43194695614> — green in 1m9s,
+including the 100-concurrent-duplicate integration test against service Postgres and Redis.
+
 
 ## H3 — Outbox, worker, retries (M2)
 
