@@ -5,10 +5,18 @@
 > A webhook gateway that accepts anything, loses nothing, duplicates nothing, and can
 > replay a bad day of events without double-charging a customer.
 
-**Status:** Phase 5 — observability, load-tested ingest, and failure-mode analysis.
+**Status:** `v1.0.0` — shipped, load-tested, and documented.
 
 **Stack:** Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2.0 · PostgreSQL 16 · Redis 7 ·
-ARQ · Docker · GitHub Actions
+ARQ · OpenTelemetry · Prometheus · k6 · Docker · GitHub Actions
+
+**Artifacts:** [case study](docs/case-study.md) · [failure modes](docs/failure-modes.md) ·
+[security notes](docs/security.md) · [interview notes](docs/interview-notes.md) ·
+[OpenAPI](docs/openapi.json) · [deploy recipe](deploy/README.md)
+
+**Demo:** run `./scripts/walkthrough.ps1` end to end, or record the scripted terminal demo
+with `vhs scripts/demo.tape`. No hosted URL is claimed; the production recipe is in
+[`deploy/`](deploy/README.md).
 
 ## The problem
 
@@ -22,7 +30,8 @@ subscriber outage silently drops events.
 - Dedupes on `(source, idempotency_key)` so retries create exactly one event.
 - Fans out through a transactional outbox with exponential backoff and jitter.
 - Classifies failures: 4xx is permanent, 5xx/429/network is retried.
-- Dead-letters exhausted deliveries and replays them with an audit trail.
+- Delivers **at least once** with a stable delivery key, dead-letters exhausted attempts, and
+  replays them with an audit trail.
 - Exposes traces, Prometheus metrics, and structured logs with request IDs.
 
 ## Architecture
@@ -104,6 +113,7 @@ uv run alembic upgrade head
 ```bash
 uv run pytest --cov=app
 ./scripts/verify.ps1   # format, lint, strict mypy, tests
+./scripts/walkthrough.ps1   # migrations, compose, ingest, delivery, replay, trace
 uv run python scripts/smoke_ingest.py   # against a running compose stack
 ```
 
@@ -209,6 +219,8 @@ creating more deliveries. Dead letters replay with
 - **Encrypted source secrets** — [ADR-002](docs/adr/002-secret-storage.md).
 - **Transactional outbox instead of publish-on-write** —
   [ADR-003](docs/adr/003-outbox-pattern.md).
+- **Scoped, hashed API keys instead of one admin secret** —
+  [ADR-004](docs/adr/004-api-key-auth.md).
 - **At-least-once delivery, not "exactly once."** Every attempt carries a stable delivery
   key; consumers dedupe. The outbox guarantees no accepted event is silently lost.
 - **Retry classification is explicit.** Retrying a permanent 4xx would DDoS a broken
@@ -239,11 +251,35 @@ are documented in [`docs/security.md`](docs/security.md). Short version: secrets
 encrypted at rest and returned once, API keys are hashed and scoped, destinations are
 SSRF-checked, and replay is append-only and idempotent.
 
+## License
+
+MIT
+
+## Cost note
+
+Approximate monthly cost, excluding the domain. These are estimates for the compose recipe,
+not billed numbers:
+
+| Volume | Setup | Est. cost/month |
+|---|---|---|
+| 1k events/day | 1 VPS, 2 vCPU / 4 GB, local Postgres + Redis | $12–24 |
+| 10k events/day | 2 vCPU / 4 GB + managed Postgres and Redis | $40–70 |
+| 100k events/day | 4 vCPU / 8 GB + managed Postgres/Redis + monitoring | $120–220 |
+
+Self-hosting keeps fixed costs low but makes you responsible for backups, Redis HA, and disk.
+The managed-database rows are the realistic comparison once reliability matters.
+
 ## What I'd do next
 
 - Per-destination transforms and circuit breakers (deferred; not needed for the reliability
   story).
-- Multi-region ingest (deferred; single-region is enough for the measured numbers).
+- Multi-region ingest and Postgres partitioning (deferred; single-region is enough for the
+  measured numbers).
+- Envelope encryption with a KMS, API key expiry, and per-tenant read scopes (see
+  [`docs/security.md`](docs/security.md) for the honest gap list).
+- A hosted live demo; the deployment recipe is complete but no VPS was provisioned for this
+  build.
+- A small UI for replay and DLQ triage; the CLI/API are the product today.
 
 ## License
 
