@@ -166,12 +166,39 @@ including the delivery integration tests against service Postgres and Redis.
 
 ## H4 — DLQ, replay, admin auth (M3)
 
-- [ ] Dead letters, API keys with scopes
-- [ ] Idempotent event and DLQ replay with audit
-- [ ] Replay storm safety test
-- [ ] Security notes
+- [x] Dead letters, API keys with scopes
+- [x] Idempotent event and DLQ replay with audit
+- [x] Replay storm safety test
+- [x] Security notes
 
-**Gate evidence:** _pending_
+**Gate evidence**
+
+```
+$ uv run alembic upgrade head
+0003 -> 0004, api keys and replay audit
+
+$ uv run pytest --cov=app
+115 passed; coverage 82.16%
+
+$ uv run python scripts/smoke_replay.py
+initial delivery: delivered
+replay: {'replay_id': ..., 'event_id': ..., 'deliveries_created': 1}
+sink deliveries: 2
+duplicate replay did not send another delivery
+events:read replay attempt: 403
+REPLAY SMOKE PASSED
+```
+
+Replay coverage in `tests/integration/test_replay.py`: dead-letter replay with a duplicate
+idempotency key returns the original result; eight concurrent same-key replays create one
+attempt set; eight concurrent distinct-key replays serialize into attempts 2–9 with one
+shared delivery key; `failed_only` targets only failed destinations; replaying with no
+destinations returns 409. Key scope tests live in `tests/integration/test_api_keys.py`:
+create/list/revoke, `events:read` cannot replay, `replay:write` cannot manage sources,
+unknown/revoked keys are 401, invalid scopes are 422.
+
+Security notes and known gaps: [security.md](security.md).
+
 
 ## H5 — Observability and load (M4)
 

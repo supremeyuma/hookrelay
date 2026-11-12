@@ -5,7 +5,7 @@
 > A webhook gateway that accepts anything, loses nothing, duplicates nothing, and can
 > replay a bad day of events without double-charging a customer.
 
-**Status:** Phase 3 — signed ingest, idempotency, retries, and dead letters.
+**Status:** Phase 4 — scoped API keys, replay, and dead-letter recovery.
 
 **Stack:** Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2.0 · PostgreSQL 16 · Redis 7 ·
 ARQ · Docker · GitHub Actions
@@ -74,6 +74,7 @@ Delivery smoke check (starts a local sink, then drives the real poller and worke
 ```bash
 uv run uvicorn tests.fixtures.sink:app --port 9099
 uv run python scripts/smoke_delivery.py
+uv run python scripts/smoke_replay.py
 ```
 
 ## Send a signed event
@@ -83,7 +84,7 @@ Create a source. The signing secret is returned exactly once:
 ```bash
 ADMIN_KEY=$(grep '^ADMIN_API_KEY=' .env | cut -d= -f2)
 curl -s -X POST http://localhost:8000/admin/sources \
-  -H "X-Admin-Key: $ADMIN_KEY" -H 'Content-Type: application/json' \
+  -H "X-API-Key: $ADMIN_KEY" -H 'Content-Type: application/json' \
   -d '{"slug":"demo","name":"Demo provider"}'
 ```
 
@@ -111,7 +112,7 @@ Add a destination; its signing secret is returned once:
 
 ```bash
 curl -s -X POST http://localhost:8000/admin/sources/demo/destinations \
-  -H "X-Admin-Key: $ADMIN_KEY" -H 'Content-Type: application/json' \
+  -H "X-API-Key: $ADMIN_KEY" -H 'Content-Type: application/json' \
   -d '{"url":"https://example.com/hooks/hookrelay"}'
 ```
 
@@ -126,6 +127,35 @@ The delivery key is stable across retries and replays, so subscribers can dedupe
 - After 8 attempts: the delivery is dead-lettered with a reason.
 - `GET /events/{id}` lists every attempt, its status, and the response code.
 
+## API keys, scopes, and replay
+
+The bootstrap `ADMIN_API_KEY` from `.env` has every scope. Create narrower keys for
+automation:
+
+```bash
+curl -s -X POST http://localhost:8000/admin/api-keys \
+  -H "X-API-Key: $ADMIN_KEY" -H 'Content-Type: application/json' \
+  -d '{"name":"ci-readonly","scopes":["events:read"]}'
+```
+
+The plaintext key is returned once; only its SHA-256 hash is stored. Scopes are
+`admin:write`, `events:read`, and `replay:write`. Revoke with
+`DELETE /admin/api-keys/{id}`.
+
+Replay an event to all active destinations, or only the failed ones:
+
+```bash
+curl -s -X POST http://localhost:8000/events/$EVENT_ID/replay \
+  -H "X-API-Key: $ADMIN_KEY" -H 'Content-Type: application/json' \
+  -H 'Idempotency-Key: replay-2026-11-12-1' \
+  -d '{"failed_only": true}'
+```
+
+Replays are appended as new attempts sharing the original delivery key, and every replay is
+audited in `replays`. Reusing an `Idempotency-Key` returns the original result without
+creating more deliveries. Dead letters replay with
+`POST /admin/dead-letters/{id}/replay`, same header contract.
+
 ## Design decisions
 
 - **Per-source idempotency keys** — [ADR-001](docs/adr/001-idempotency-scope.md).
@@ -136,6 +166,11 @@ The delivery key is stable across retries and replays, so subscribers can dedupe
   key; consumers dedupe. The outbox guarantees no accepted event is silently lost.
 - **Retry classification is explicit.** Retrying a permanent 4xx would DDoS a broken
   subscriber, so only 408/425/429/5xx/network errors are retried.
+- **Scoped, hashed API keys.** The bootstrap key is only for setup; automation gets the
+  narrowest scope it needs, and stored keys are hashes with a display prefix.
+- **Replays are append-only and idempotent.** A replay never mutates history; it adds
+  attempts under the same delivery key, and the caller's idempotency key makes retries of
+  the replay itself safe.
 
 Operational choices already visible in the code:
 
@@ -147,6 +182,13 @@ Operational choices already visible in the code:
   failing the first webhook.
 - **Errors never leak internals.** Unhandled exceptions return a request id and a generic
   message; the traceback stays in the logs.
+
+## Security notes
+
+Secrets handling, HMAC verification, scoped keys, SSRF, replay limits, and the known gaps
+are documented in [`docs/security.md`](docs/security.md). Short version: secrets are
+encrypted at rest and returned once, API keys are hashed and scoped, destinations are
+SSRF-checked, and replay is append-only and idempotent.
 
 ## What I'd do next
 
