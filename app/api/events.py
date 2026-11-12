@@ -8,11 +8,12 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas import DeliveryAttempt, EventDetail
+from app.core.auth import require_events_read
 from app.db.session import get_session
 from app.models.delivery import Delivery
 from app.models.event import Event
 
-router = APIRouter(tags=["events"])
+router = APIRouter(tags=["events"], dependencies=[Depends(require_events_read)])
 
 
 @router.get(

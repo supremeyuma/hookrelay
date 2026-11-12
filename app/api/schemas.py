@@ -6,6 +6,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from app.core.api_keys import Scope
+
 SLUG_PATTERN = r"^[a-z0-9][a-z0-9_-]{1,63}$"
 
 
@@ -34,6 +36,38 @@ class SourceCreated(SourceSummary):
 class SourceSecret(BaseModel):
     slug: str
     secret: str
+
+
+class ApiKeyCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    scopes: list[Scope] = Field(min_length=1)
+
+
+class ApiKeySummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    name: str
+    key_prefix: str
+    scopes: list[str]
+    active: bool
+    last_used_at: datetime | None = None
+    created_at: datetime
+
+
+class ApiKeyCreated(ApiKeySummary):
+    key: str = Field(description="Plaintext API key. Returned only once.")
+
+
+class ReplayRequest(BaseModel):
+    destination_ids: list[UUID] | None = None
+    failed_only: bool = False
+
+
+class ReplayResponse(BaseModel):
+    replay_id: UUID
+    event_id: UUID
+    deliveries_created: int
 
 
 class DestinationCreate(BaseModel):

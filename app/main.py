@@ -11,6 +11,7 @@ from app.api.admin import router as admin_router
 from app.api.events import router as events_router
 from app.api.health import router as health_router
 from app.api.ingest import router as ingest_router
+from app.api.replay import router as replay_router
 from app.core.config import get_settings
 from app.core.crypto import SecretCipher
 from app.core.errors import register_exception_handlers
@@ -57,6 +58,7 @@ def create_app() -> FastAPI:
     application.include_router(admin_router)
     application.include_router(ingest_router)
     application.include_router(events_router)
+    application.include_router(replay_router)
     return application
 
 

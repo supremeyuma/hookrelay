@@ -1,18 +1,20 @@
 """Admin authentication and source management."""
 
-import hmac
 import logging
 import secrets
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_cipher
 from app.api.schemas import (
+    ApiKeyCreate,
+    ApiKeyCreated,
+    ApiKeySummary,
     DestinationCreate,
     DestinationCreated,
     DestinationSummary,
@@ -22,29 +24,27 @@ from app.api.schemas import (
     SourceSecret,
     SourceSummary,
 )
+from app.core.api_keys import Scope, generate_api_key
+from app.core.auth import require_admin
 from app.core.config import Settings, get_settings
 from app.core.crypto import SecretCipher
 from app.core.urls import InvalidDestinationUrl, validate_destination_url
 from app.db.session import get_session
+from app.models.api_key import ApiKey
 from app.models.destination import Destination
 from app.models.source import Source
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(
+    prefix="/admin",
+    tags=["admin"],
+    dependencies=[Depends(require_admin)],
+)
 
 
-def require_admin(
-    settings: Annotated[Settings, Depends(get_settings)],
-    x_admin_key: Annotated[str | None, Header(alias="X-Admin-Key")] = None,
-) -> None:
-    """Reject admin requests that do not carry the bootstrap key."""
-    if x_admin_key is None or not hmac.compare_digest(x_admin_key, settings.admin_api_key):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="invalid admin key",
-            headers={"WWW-Authenticate": "ApiKey"},
-        )
+def _scope_values(scopes: list[Scope]) -> list[str]:
+    return list(dict.fromkeys(scope.value for scope in scopes))
 
 
 @router.post(
@@ -52,7 +52,6 @@ def require_admin(
     response_model=SourceCreated,
     status_code=status.HTTP_201_CREATED,
     summary="Create a webhook source",
-    dependencies=[Depends(require_admin)],
 )
 async def create_source(
     payload: SourceCreate,
@@ -93,7 +92,6 @@ async def create_source(
     "/sources",
     response_model=list[SourceSummary],
     summary="List sources without secrets",
-    dependencies=[Depends(require_admin)],
 )
 async def list_sources(
     session: Annotated[AsyncSession, Depends(get_session)],
@@ -106,7 +104,6 @@ async def list_sources(
     "/sources/{slug}/rotate-secret",
     response_model=SourceSecret,
     summary="Rotate a source signing secret",
-    dependencies=[Depends(require_admin)],
 )
 async def rotate_secret(
     slug: str,
@@ -141,7 +138,6 @@ async def _validated_url(url: str, settings: Settings) -> str:
     response_model=DestinationCreated,
     status_code=status.HTTP_201_CREATED,
     summary="Create a destination for a source",
-    dependencies=[Depends(require_admin)],
 )
 async def create_destination(
     slug: str,
@@ -180,7 +176,6 @@ async def create_destination(
     "/sources/{slug}/destinations",
     response_model=list[DestinationSummary],
     summary="List destinations without secrets",
-    dependencies=[Depends(require_admin)],
 )
 async def list_destinations(
     slug: str,
@@ -204,7 +199,6 @@ async def list_destinations(
     "/destinations/{destination_id}",
     response_model=DestinationSummary,
     summary="Update a destination URL or active flag",
-    dependencies=[Depends(require_admin)],
 )
 async def update_destination(
     destination_id: UUID,
@@ -224,3 +218,69 @@ async def update_destination(
     await session.commit()
     await session.refresh(destination)
     return DestinationSummary.model_validate(destination)
+
+
+@router.post(
+    "/api-keys",
+    response_model=ApiKeyCreated,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a scoped API key",
+)
+async def create_api_key(
+    payload: ApiKeyCreate,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ApiKeyCreated:
+    generated = generate_api_key()
+    api_key = ApiKey(
+        name=payload.name,
+        key_hash=generated.key_hash,
+        key_prefix=generated.key_prefix,
+        scopes=_scope_values(payload.scopes),
+        active=True,
+    )
+    session.add(api_key)
+    await session.commit()
+    await session.refresh(api_key)
+
+    return ApiKeyCreated(
+        id=api_key.id,
+        name=api_key.name,
+        key_prefix=api_key.key_prefix,
+        scopes=api_key.scopes,
+        active=api_key.active,
+        last_used_at=api_key.last_used_at,
+        created_at=api_key.created_at,
+        key=generated.raw,
+    )
+
+
+@router.get(
+    "/api-keys",
+    response_model=list[ApiKeySummary],
+    summary="List API keys without their secrets",
+)
+async def list_api_keys(
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> list[ApiKeySummary]:
+    rows = (await session.scalars(select(ApiKey).order_by(ApiKey.created_at.desc()))).all()
+    return [ApiKeySummary.model_validate(row) for row in rows]
+
+
+@router.delete(
+    "/api-keys/{api_key_id}",
+    response_model=ApiKeySummary,
+    summary="Revoke an API key",
+)
+async def revoke_api_key(
+    api_key_id: UUID,
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ApiKeySummary:
+    api_key = await session.get(ApiKey, api_key_id)
+    if api_key is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="api key not found")
+
+    api_key.active = False
+    await session.commit()
+    await session.refresh(api_key)
+    logger.info("api_key_revoked", extra={"source": api_key.name})
+    return ApiKeySummary.model_validate(api_key)

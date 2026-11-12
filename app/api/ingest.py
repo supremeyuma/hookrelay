@@ -31,6 +31,7 @@ _SENSITIVE_HEADERS = {
     "authorization",
     "cookie",
     "x-admin-key",
+    "x-api-key",
     "x-hookrelay-signature",
 }
 
