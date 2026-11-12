@@ -5,7 +5,7 @@
 > A webhook gateway that accepts anything, loses nothing, duplicates nothing, and can
 > replay a bad day of events without double-charging a customer.
 
-**Status:** Phase 4 — scoped API keys, replay, and dead-letter recovery.
+**Status:** Phase 5 — observability, load-tested ingest, and failure-mode analysis.
 
 **Stack:** Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2.0 · PostgreSQL 16 · Redis 7 ·
 ARQ · Docker · GitHub Actions
@@ -40,6 +40,44 @@ flowchart LR
   W -->|exhausted| DLQ[(dead_letters)]
 ```
 
+## Measured results
+
+| Metric | Value | How |
+|---|---|---|
+| Ingest throughput | **419 req/s** | `load/ingest.js`, 10 VUs, 30s, 4 uvicorn workers |
+| Ingest p95 | **31.8 ms** | same run |
+| Ingest error rate | **0.00%** | 13,085 requests |
+| Health endpoint | 500 req/s, p95 1.1 ms | `load/health.js` |
+| Ingest with fan-out | 278 req/s accepted, 3,042 deliveries drained in ~35s | `load/delivery.js`, 5 VUs, one worker |
+| Test coverage | 82% | `pytest --cov=app` |
+
+Reference host: Intel i7-14650HX, 24 logical CPUs, 15.4 GiB to Docker, Windows 11 + WSL2.
+k6 ran in a container on the same Docker network. Raw summary:
+[`load/results/ingest-2026-11-12.txt`](load/results/ingest-2026-11-12.txt).
+The first naive arrival-rate run spawned 1,000 VUs and collapsed; the fixed-VU result above is
+the reproducible one. Details and the 10× analysis are in
+[`docs/failure-modes.md`](docs/failure-modes.md).
+
+## Observability
+
+- **Prometheus**: API `/metrics` (aggregated across uvicorn workers via multiprocess mode),
+  worker `:9100`, poller `:9101`. Custom metrics cover ingest results/latency, delivery
+  results/latency, DLQ count, outbox lag, events by status, and poller errors.
+- **Traces**: OpenTelemetry across FastAPI, SQLAlchemy, asyncpg, Redis, and httpx. The
+  traceparent is stored with the outbox row and continued by the worker, so one trace shows
+  ingest → outbox → delivery → the subscriber POST. A captured 16-span trace is in
+  [`docs/traces/sample-trace.json`](docs/traces/sample-trace.json).
+
+```bash
+# PowerShell
+$env:OTEL_EXPORTER_OTLP_ENDPOINT="http://jaeger:4318"
+docker compose --profile observability up -d
+# Jaeger UI: http://localhost:16686
+```
+
+Compose runs 4 API workers by default (`WEB_CONCURRENCY=4`); each worker has a 5+5 DB pool so
+four workers stay under Postgres' 100-connection default.
+
 ## Run it
 
 ```bash
@@ -67,6 +105,15 @@ uv run alembic upgrade head
 uv run pytest --cov=app
 ./scripts/verify.ps1   # format, lint, strict mypy, tests
 uv run python scripts/smoke_ingest.py   # against a running compose stack
+```
+
+Load tests:
+
+```bash
+# Run from the repo root; k6 talks to the compose API over the Docker network.
+docker run --rm --network hookrelay_default -v "${PWD}/load:/load" \
+  -e BASE_URL=http://api:8000 -e ADMIN_KEY="$ADMIN_KEY" \
+  -e VUS=10 -e DURATION=30s grafana/k6 run /load/ingest.js
 ```
 
 Delivery smoke check (starts a local sink, then drives the real poller and worker):
@@ -171,6 +218,8 @@ creating more deliveries. Dead letters replay with
 - **Replays are append-only and idempotent.** A replay never mutates history; it adds
   attempts under the same delivery key, and the caller's idempotency key makes retries of
   the replay itself safe.
+- **Observability is not on the critical path.** A down OTLP collector drops spans; ingest
+  keeps working. Metrics are scraped, not pushed into the request path.
 
 Operational choices already visible in the code:
 

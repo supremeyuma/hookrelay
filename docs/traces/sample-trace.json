@@ -1,0 +1,917 @@
+{
+    "result":  {
+                   "resourceSpans":  [
+                                         {
+                                             "resource":  {
+                                                              "attributes":  [
+                                                                                 {
+                                                                                     "key":  "service.instance.id",
+                                                                                     "value":  {
+                                                                                                   "stringValue":  "e4c95bf8-09d5-42c1-a95f-634ba334b770"
+                                                                                               }
+                                                                                 },
+                                                                                 {
+                                                                                     "key":  "service.name",
+                                                                                     "value":  {
+                                                                                                   "stringValue":  "hookrelay-worker"
+                                                                                               }
+                                                                                 },
+                                                                                 {
+                                                                                     "key":  "telemetry.sdk.language",
+                                                                                     "value":  {
+                                                                                                   "stringValue":  "python"
+                                                                                               }
+                                                                                 },
+                                                                                 {
+                                                                                     "key":  "telemetry.sdk.name",
+                                                                                     "value":  {
+                                                                                                   "stringValue":  "opentelemetry"
+                                                                                               }
+                                                                                 },
+                                                                                 {
+                                                                                     "key":  "telemetry.sdk.version",
+                                                                                     "value":  {
+                                                                                                   "stringValue":  "1.45.2"
+                                                                                               }
+                                                                                 }
+                                                                             ]
+                                                          },
+                                             "scopeSpans":  [
+                                                                {
+                                                                    "scope":  {
+                                                                                  "name":  "opentelemetry.instrumentation.httpx",
+                                                                                  "version":  "0.66b2"
+                                                                              },
+                                                                    "spans":  [
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "41e31a680b3f031f",
+                                                                                      "parentSpanId":  "9eb39880fba4898c",
+                                                                                      "flags":  256,
+                                                                                      "name":  "POST",
+                                                                                      "kind":  3,
+                                                                                      "startTimeUnixNano":  "1794489388563880243",
+                                                                                      "endTimeUnixNano":  "1794489388566801708",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "http.method",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "POST"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.status_code",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "200"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.url",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "http://host.docker.internal:9099/hook"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  }
+                                                                              ],
+                                                                    "schemaUrl":  "https://opentelemetry.io/schemas/1.11.0"
+                                                                },
+                                                                {
+                                                                    "scope":  {
+                                                                                  "name":  "app.services.delivery"
+                                                                              },
+                                                                    "spans":  [
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "9eb39880fba4898c",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  768,
+                                                                                      "name":  "hookrelay.deliver",
+                                                                                      "kind":  4,
+                                                                                      "startTimeUnixNano":  "1794489388563573812",
+                                                                                      "endTimeUnixNano":  "1794489388567748829",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "hookrelay.attempt",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "1"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "hookrelay.destination_id",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "8b24cfe0-5ad2-47fc-9da9-a5de5caf05cd"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "hookrelay.event_id",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "91e4f3ff-2f79-4ae7-a679-fda4ae27673a"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.response.status_code",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "200"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "@jaeger@warnings",
+                                                                                                             "value":  {
+                                                                                                                           "arrayValue":  {
+                                                                                                                                              "values":  [
+                                                                                                                                                             {
+                                                                                                                                                                 "stringValue":  "clock skew adjustment disabled; not applying calculated delta of -663.097454ms"
+                                                                                                                                                             }
+                                                                                                                                                         ]
+                                                                                                                                          }
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  }
+                                                                              ]
+                                                                }
+                                                            ]
+                                         },
+                                         {
+                                             "resource":  {
+                                                              "attributes":  [
+                                                                                 {
+                                                                                     "key":  "service.instance.id",
+                                                                                     "value":  {
+                                                                                                   "stringValue":  "7bf6a6ae-9cba-41f4-abb1-beae881e830a"
+                                                                                               }
+                                                                                 },
+                                                                                 {
+                                                                                     "key":  "service.name",
+                                                                                     "value":  {
+                                                                                                   "stringValue":  "hookrelay"
+                                                                                               }
+                                                                                 },
+                                                                                 {
+                                                                                     "key":  "telemetry.sdk.language",
+                                                                                     "value":  {
+                                                                                                   "stringValue":  "python"
+                                                                                               }
+                                                                                 },
+                                                                                 {
+                                                                                     "key":  "telemetry.sdk.name",
+                                                                                     "value":  {
+                                                                                                   "stringValue":  "opentelemetry"
+                                                                                               }
+                                                                                 },
+                                                                                 {
+                                                                                     "key":  "telemetry.sdk.version",
+                                                                                     "value":  {
+                                                                                                   "stringValue":  "1.45.2"
+                                                                                               }
+                                                                                 }
+                                                                             ]
+                                                          },
+                                             "scopeSpans":  [
+                                                                {
+                                                                    "scope":  {
+                                                                                  "name":  "opentelemetry.instrumentation.asyncpg",
+                                                                                  "version":  "0.66b2"
+                                                                              },
+                                                                    "spans":  [
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "4e52ff8efd0a0688",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  "BEGIN;",
+                                                                                      "kind":  3,
+                                                                                      "startTimeUnixNano":  "1794489387878490068",
+                                                                                      "endTimeUnixNano":  "1794489387878781143",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "db.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.statement",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "BEGIN;"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.system",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgresql"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.user",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgres"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.port",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "5432"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.transport",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "ip_tcp"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  },
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "314064604772a7cb",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  ";",
+                                                                                      "kind":  3,
+                                                                                      "startTimeUnixNano":  "1794489387878860749",
+                                                                                      "endTimeUnixNano":  "1794489387879224440",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "db.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.statement",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  ";"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.system",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgresql"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.user",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgres"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.port",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "5432"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.transport",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "ip_tcp"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  },
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "8a089076b7240ece",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  "ROLLBACK;",
+                                                                                      "kind":  3,
+                                                                                      "startTimeUnixNano":  "1794489387879318662",
+                                                                                      "endTimeUnixNano":  "1794489387879480099",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "db.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.statement",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "ROLLBACK;"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.system",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgresql"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.user",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgres"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.port",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "5432"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.transport",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "ip_tcp"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  },
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "6bc87c42549394a1",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  "BEGIN;",
+                                                                                      "kind":  3,
+                                                                                      "startTimeUnixNano":  "1794489387879723958",
+                                                                                      "endTimeUnixNano":  "1794489387879883039",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "db.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.statement",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "BEGIN;"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.system",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgresql"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.user",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgres"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.port",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "5432"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.transport",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "ip_tcp"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  },
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "1b255a79cef2030c",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  "SELECT",
+                                                                                      "kind":  3,
+                                                                                      "startTimeUnixNano":  "1794489387879966718",
+                                                                                      "endTimeUnixNano":  "1794489387880181589",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "db.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.statement",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "SELECT sources.id, sources.slug, sources.name, sources.secret_encrypted, sources.rate_limit_per_second, sources.burst, sources.created_at \nFROM sources \nWHERE sources.slug = $1::VARCHAR"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.system",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgresql"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.user",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgres"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.port",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "5432"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.transport",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "ip_tcp"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  },
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "1f482732f41a5d08",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  "INSERT",
+                                                                                      "kind":  3,
+                                                                                      "startTimeUnixNano":  "1794489387923803031",
+                                                                                      "endTimeUnixNano":  "1794489387924381776",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "db.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.statement",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "INSERT INTO events (id, source_id, external_id, idempotency_key, payload, headers, status) VALUES ($1::UUID, $2::UUID, $3::VARCHAR, $4::VARCHAR, $5::JSONB, $6::JSONB, $7::VARCHAR) ON CONFLICT (source_id, idempotency_key) DO NOTHING RETURNING events.id"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.system",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgresql"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.user",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgres"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.port",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "5432"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.transport",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "ip_tcp"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  },
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "2e713ca72a6747a8",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  "INSERT",
+                                                                                      "kind":  3,
+                                                                                      "startTimeUnixNano":  "1794489387926208979",
+                                                                                      "endTimeUnixNano":  "1794489387926648032",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "db.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.statement",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "INSERT INTO outbox (event_id, traceparent, published_at) VALUES ($1::UUID, $2::VARCHAR, $3::TIMESTAMP WITH TIME ZONE) RETURNING outbox.id, outbox.created_at"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.system",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgresql"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.user",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgres"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.port",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "5432"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.transport",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "ip_tcp"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  },
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "4baaaaa4ef154d9b",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  "COMMIT;",
+                                                                                      "kind":  3,
+                                                                                      "startTimeUnixNano":  "1794489387927036013",
+                                                                                      "endTimeUnixNano":  "1794489387928245175",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "db.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.statement",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "COMMIT;"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.system",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgresql"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.user",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "hookrelay"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "postgres"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.port",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "5432"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.transport",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "ip_tcp"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  }
+                                                                              ],
+                                                                    "schemaUrl":  "https://opentelemetry.io/schemas/1.11.0"
+                                                                },
+                                                                {
+                                                                    "scope":  {
+                                                                                  "name":  "opentelemetry.instrumentation.fastapi",
+                                                                                  "version":  "0.66b2"
+                                                                              },
+                                                                    "spans":  [
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "72c8e6b695b28a3b",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  "POST /ingest/{source_slug} http receive",
+                                                                                      "kind":  1,
+                                                                                      "startTimeUnixNano":  "1794489387880465841",
+                                                                                      "endTimeUnixNano":  "1794489387918262522",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "asgi.event.type",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "http.request"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  },
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "7a873de3188dcb1e",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  "POST /ingest/{source_slug} http send",
+                                                                                      "kind":  1,
+                                                                                      "startTimeUnixNano":  "1794489387928803741",
+                                                                                      "endTimeUnixNano":  "1794489387928827453",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "asgi.event.type",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "http.response.start"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.status_code",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "202"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  },
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "93dbcf3d4231bf92",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  "POST /ingest/{source_slug} http send",
+                                                                                      "kind":  1,
+                                                                                      "startTimeUnixNano":  "1794489387928971825",
+                                                                                      "endTimeUnixNano":  "1794489387928980265",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "asgi.event.type",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "http.response.body"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  },
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "172837f5cd3ee50d",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  "POST /ingest/{source_slug} http send",
+                                                                                      "kind":  1,
+                                                                                      "startTimeUnixNano":  "1794489387929032554",
+                                                                                      "endTimeUnixNano":  "1794489387929039962",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "asgi.event.type",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "http.response.body"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  },
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "712e0e6618f14680",
+                                                                                      "parentSpanId":  "62619c41213c9b30",
+                                                                                      "flags":  768,
+                                                                                      "name":  "POST /ingest/{source_slug}",
+                                                                                      "kind":  2,
+                                                                                      "startTimeUnixNano":  "1794489387876070442",
+                                                                                      "endTimeUnixNano":  "1794489387929057291",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "http.flavor",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "1.1"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.host",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "172.22.0.5:8000"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.method",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "POST"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.route",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "/ingest/{source_slug}"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.scheme",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "http"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.server_name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "localhost:8000"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.status_code",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "202"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.target",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "/ingest/trace-1794489387"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.url",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "http://localhost:8000/ingest/trace-1794489387"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "http.user_agent",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "python-httpx/0.28.1"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.host.port",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "8000"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.ip",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "172.22.0.1"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.port",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "55600"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "@jaeger@warnings",
+                                                                                                             "value":  {
+                                                                                                                           "arrayValue":  {
+                                                                                                                                              "values":  [
+                                                                                                                                                             {
+                                                                                                                                                                 "stringValue":  "parent span ID=62619c41213c9b30 is not in the trace; skipping clock skew adjustment"
+                                                                                                                                                             }
+                                                                                                                                                         ]
+                                                                                                                                          }
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  }
+                                                                              ],
+                                                                    "schemaUrl":  "https://opentelemetry.io/schemas/1.11.0"
+                                                                },
+                                                                {
+                                                                    "scope":  {
+                                                                                  "name":  "opentelemetry.instrumentation.redis",
+                                                                                  "version":  "0.66b2"
+                                                                              },
+                                                                    "spans":  [
+                                                                                  {
+                                                                                      "traceId":  "732707222e5db301944c23ee78ed5b03",
+                                                                                      "spanId":  "e96177693202211f",
+                                                                                      "parentSpanId":  "712e0e6618f14680",
+                                                                                      "flags":  256,
+                                                                                      "name":  "EVAL",
+                                                                                      "kind":  3,
+                                                                                      "startTimeUnixNano":  "1794489387918817447",
+                                                                                      "endTimeUnixNano":  "1794489387921278760",
+                                                                                      "attributes":  [
+                                                                                                         {
+                                                                                                             "key":  "db.redis.args_length",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "8"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.redis.database_index",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "0"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.statement",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "EVAL ? ? ? ? ? ? ?"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "db.system",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "redis"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.name",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "redis"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.peer.port",
+                                                                                                             "value":  {
+                                                                                                                           "intValue":  "6379"
+                                                                                                                       }
+                                                                                                         },
+                                                                                                         {
+                                                                                                             "key":  "net.transport",
+                                                                                                             "value":  {
+                                                                                                                           "stringValue":  "ip_tcp"
+                                                                                                                       }
+                                                                                                         }
+                                                                                                     ],
+                                                                                      "status":  {
+
+                                                                                                 }
+                                                                                  }
+                                                                              ],
+                                                                    "schemaUrl":  "https://opentelemetry.io/schemas/1.11.0"
+                                                                }
+                                                            ]
+                                         }
+                                     ]
+               }
+}

@@ -205,13 +205,43 @@ including replay idempotency and concurrent replay tests against service Postgre
 
 ## H5 — Observability and load (M4)
 
-- [ ] OTel traces across ingest → queue → delivery
-- [ ] Prometheus metrics and outbox lag
-- [ ] k6 ingest and delivery scripts
-- [ ] Reproducible load numbers with hardware
-- [ ] Failure modes at 10× traffic
+- [x] OTel traces across ingest → queue → delivery
+- [x] Prometheus metrics and outbox lag
+- [x] k6 ingest and delivery scripts
+- [x] Reproducible load numbers with hardware
+- [x] Failure modes at 10× traffic
 
-**Gate evidence:** _pending_
+**Gate evidence**
+
+```
+$ load/ingest.js (10 VUs, 30s, 4 API workers)
+419 req/s, p95 31.78 ms, 0.00% errors, 13,085 requests
+
+$ load/health.js (500 rps, 10s)
+500 req/s, p95 1.07 ms
+
+$ load/delivery.js (5 VUs, 20s, 1 worker)
+278 req/s accepted; sink received 3,042 deliveries within ~35s
+
+$ pytest --cov=app
+115 passed; coverage 82.16%
+
+Jaeger trace 732707222e5db301944c23ee78ed5b03: 16 spans across hookrelay (14) and
+hookrelay-worker (2); operations include POST /ingest/{source_slug}, SQL BEGIN/INSERT/COMMIT,
+Redis, hookrelay.deliver, and the outbound POST.
+```
+
+Metrics after the run (aggregated across 4 workers):
+`hookrelay_ingest_total{result="accepted"} 23045`,
+`hookrelay_ingest_total{result="duplicate"} 2455`,
+`hookrelay_ingest_duration_seconds_count 25500`,
+`hookrelay_outbox_lag_seconds 0` after the poller batch optimization.
+
+The first arrival-rate attempt spawned 1,000 VUs and collapsed the host (p95 15s, ~130 rps);
+the fixed-VU run above is the reproducible measurement. Analysis of the first bottlenecks at
+10× is in [failure-modes.md](failure-modes.md). Trace sample:
+[traces/sample-trace.json](traces/sample-trace.json).
+
 
 ## H6 — Polish, deploy, release (M5)
 
