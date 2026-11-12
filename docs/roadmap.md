@@ -160,6 +160,9 @@ enqueue is recovered by `enqueue_due_deliveries`.
 
 ADR: [003-outbox-pattern](adr/003-outbox-pattern.md).
 
+CI run: <https://github.com/supremeyuma/hookrelay/actions/runs/43205973841> — green in 1m10s,
+including the delivery integration tests against service Postgres and Redis.
+
 
 ## H4 — DLQ, replay, admin auth (M3)
 
