@@ -64,6 +64,9 @@ jobs:
       - name: Typecheck
         run: uv run mypy app
 
+      - name: OpenAPI check
+        run: uv run python scripts/export_openapi.py --check
+
       - name: Tests
         run: uv run pytest --cov=app --cov-report=term-missing
 
