@@ -9,4 +9,4 @@ def test_package_imports() -> None:
 
 
 def test_version_matches_project() -> None:
-    assert __version__ == "0.1.0"
+    assert __version__ == "1.0.0"

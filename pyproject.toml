@@ -1,6 +1,6 @@
 [project]
 name = "hookrelay"
-version = "0.1.0"
+version = "1.0.0"
 description = "Idempotent webhook ingestion and delivery gateway with retries, DLQ, and replay"
 readme = "README.md"
 authors = [{ name = "supremeyuma" }]
