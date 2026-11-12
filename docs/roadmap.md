@@ -242,6 +242,8 @@ the fixed-VU run above is the reproducible measurement. Analysis of the first bo
 10× is in [failure-modes.md](failure-modes.md). Trace sample:
 [traces/sample-trace.json](traces/sample-trace.json).
 
+CI run: <https://github.com/supremeyuma/hookrelay/actions/runs/43226262792> — green in 1m6s.
+
 
 ## H6 — Polish, deploy, release (M5)
 
