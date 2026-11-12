@@ -275,5 +275,6 @@ development database or volumes. The deploy recipe is in `deploy/`; no hosted UR
 because no VPS was provisioned. Record the GIF with `vhs scripts/demo.tape` on a machine with
 vhs/ttyd/ffmpeg and replace the demo line in the README.
 
-CI run: <https://github.com/supremeyuma/hookrelay/actions/runs/43230184695> — pending fill.
+CI run: <https://github.com/supremeyuma/hookrelay/actions/runs/43237338795> — green in 1m10s,
+including OpenAPI check, 117 tests, and the Docker build.
 
