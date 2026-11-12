@@ -11,11 +11,16 @@ request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
 
 _EXTRA_FIELDS = (
     "event_id",
+    "delivery_id",
+    "destination_id",
+    "attempt",
     "source",
     "method",
     "path",
     "status_code",
     "duration_ms",
+    "published",
+    "due",
     "error",
 )
 

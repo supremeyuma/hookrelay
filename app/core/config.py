@@ -35,6 +35,8 @@ class Settings(BaseSettings):
     max_body_bytes: int = Field(default=262_144, ge=1_024)
     log_level: str = Field(default="INFO")
     allow_private_destinations: bool = Field(default=False)
+    delivery_max_attempts: int = Field(default=8, ge=1, le=20)
+    delivery_timeout_seconds: float = Field(default=10.0, gt=0, le=60)
 
     otel_exporter_otlp_endpoint: str | None = Field(default=None)
     otel_service_name: str = Field(default="hookrelay")
