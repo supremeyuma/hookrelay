@@ -17,12 +17,15 @@ BASE = {
 
 def test_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("LOG_LEVEL", raising=False)
+    monkeypatch.delenv("ALLOW_PRIVATE_DESTINATIONS", raising=False)
     settings = Settings(_env_file=None, **BASE)
 
     assert settings.signature_tolerance_seconds == 300
     assert settings.max_body_bytes == 262_144
     assert settings.log_level == "INFO"
     assert settings.allow_private_destinations is False
+    assert settings.delivery_max_attempts == 8
+    assert settings.delivery_timeout_seconds == 10.0
 
 
 def test_missing_database_url_fails(monkeypatch: pytest.MonkeyPatch) -> None:

@@ -6,7 +6,9 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from app.core.config import get_settings
 from app.core.security import compute_signature
+from app.main import app
 from tests.integration.helpers import db_scalar
 
 pytestmark = pytest.mark.integration
@@ -84,3 +86,73 @@ def test_rotation_invalidates_old_secret(client: TestClient, admin_headers: dict
     assert _ingest(client, "stripe", old_secret, "k2").status_code == 401
     assert _ingest(client, "stripe", new_secret, "k3").status_code == 202
     assert db_scalar("SELECT count(*) FROM events") == 2
+
+
+def test_destination_lifecycle(client: TestClient, admin_headers: dict[str, str]) -> None:
+    _create(client, admin_headers)
+
+    created = client.post(
+        "/admin/sources/stripe/destinations",
+        json={"url": "http://127.0.0.1:9099/hook"},
+        headers=admin_headers,
+    )
+    assert created.status_code == 201, created.text
+    destination = created.json()
+    assert destination["secret"]
+
+    listing = client.get("/admin/sources/stripe/destinations", headers=admin_headers)
+    assert listing.status_code == 200
+    assert "secret" not in listing.json()[0]
+    assert "secret_encrypted" not in listing.json()[0]
+
+    updated = client.patch(
+        f"/admin/destinations/{destination['id']}",
+        json={"active": False},
+        headers=admin_headers,
+    )
+    assert updated.status_code == 200
+    assert updated.json()["active"] is False
+
+    invalid = client.patch(
+        f"/admin/destinations/{destination['id']}",
+        json={"url": "ftp://example.com/hook"},
+        headers=admin_headers,
+    )
+    assert invalid.status_code == 422
+
+    missing = client.patch(
+        "/admin/destinations/00000000-0000-0000-0000-000000000000",
+        json={"active": True},
+        headers=admin_headers,
+    )
+    assert missing.status_code == 404
+
+
+def test_destinations_require_a_known_source(
+    client: TestClient, admin_headers: dict[str, str]
+) -> None:
+    assert client.get("/admin/sources/nope/destinations", headers=admin_headers).status_code == 404
+    assert (
+        client.post(
+            "/admin/sources/nope/destinations",
+            json={"url": "http://127.0.0.1:9099/hook"},
+            headers=admin_headers,
+        ).status_code
+        == 404
+    )
+
+
+def test_private_destination_rejected_when_not_allowed(
+    client: TestClient, admin_headers: dict[str, str]
+) -> None:
+    _create(client, admin_headers)
+    settings = get_settings().model_copy(update={"allow_private_destinations": False})
+    app.dependency_overrides[get_settings] = lambda: settings
+
+    response = client.post(
+        "/admin/sources/stripe/destinations",
+        json={"url": "http://127.0.0.1:9099/hook"},
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 422

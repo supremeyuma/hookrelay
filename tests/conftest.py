@@ -20,6 +20,7 @@ os.environ.setdefault(
 )
 os.environ.setdefault("ADMIN_API_KEY", "test-admin-key-at-least-16-chars")
 os.environ.setdefault("LOG_LEVEL", "WARNING")
+os.environ.setdefault("ALLOW_PRIVATE_DESTINATIONS", "true")
 
 
 @pytest.fixture
