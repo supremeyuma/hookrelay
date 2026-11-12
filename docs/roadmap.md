@@ -199,6 +199,9 @@ unknown/revoked keys are 401, invalid scopes are 422.
 
 Security notes and known gaps: [security.md](security.md).
 
+CI run: <https://github.com/supremeyuma/hookrelay/actions/runs/43210245459> — green in 1m1s,
+including replay idempotency and concurrent replay tests against service Postgres/Redis.
+
 
 ## H5 — Observability and load (M4)
 
