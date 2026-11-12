@@ -36,6 +36,31 @@ class SourceSecret(BaseModel):
     secret: str
 
 
+class DestinationCreate(BaseModel):
+    url: str = Field(min_length=1, max_length=2048)
+    secret: str | None = Field(default=None, min_length=16, max_length=256)
+    active: bool = True
+
+
+class DestinationUpdate(BaseModel):
+    url: str | None = Field(default=None, min_length=1, max_length=2048)
+    active: bool | None = None
+
+
+class DestinationSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    source_id: UUID
+    url: str
+    active: bool
+    created_at: datetime
+
+
+class DestinationCreated(DestinationSummary):
+    secret: str = Field(description="Plaintext delivery secret. Returned only once.")
+
+
 class IngestResponse(BaseModel):
     status: Literal["accepted", "duplicate"]
     event_id: UUID
@@ -49,6 +74,9 @@ class DeliveryAttempt(BaseModel):
     attempt: int
     status: str
     response_code: int | None = None
+    error_class: str | None = None
+    next_attempt_at: datetime | None = None
+    completed_at: datetime | None = None
     created_at: datetime
 
 
