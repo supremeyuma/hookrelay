@@ -5,7 +5,7 @@
 > A webhook gateway that accepts anything, loses nothing, duplicates nothing, and can
 > replay a bad day of events without double-charging a customer.
 
-**Status:** Phase 1 — skeleton, health, compose, and CI are in place.
+**Status:** Phase 3 — signed ingest, idempotency, retries, and dead letters.
 
 **Stack:** Python 3.12 · FastAPI · Pydantic v2 · SQLAlchemy 2.0 · PostgreSQL 16 · Redis 7 ·
 ARQ · Docker · GitHub Actions
@@ -30,12 +30,14 @@ subscriber outage silently drops events.
 ```mermaid
 flowchart LR
   P[Provider] -->|signed POST| A[FastAPI ingest]
-  A --> D[(Postgres events + outbox)]
+  A -->|event + outbox, one transaction| D[(Postgres)]
   A --> R[(Redis rate limit)]
-  W[ARQ worker] --> D
-  W -->|signed delivery| S[Subscriber]
-  W --> DLQ[dead_letters]
-  DLQ -->|replay, audited| W
+  D --> PL[Outbox poller]
+  PL -->|ARQ job| Q[(Redis queue)]
+  Q --> W[Delivery worker]
+  W -->|signed POST| S[Subscriber]
+  W --> D
+  W -->|exhausted| DLQ[(dead_letters)]
 ```
 
 ## Run it
@@ -52,6 +54,7 @@ docker compose up --build
 - Liveness: <http://localhost:8000/healthz>
 - Readiness (Postgres + Redis): <http://localhost:8000/readyz>
 
+Compose starts Postgres, Redis, the API, an ARQ delivery worker, and the outbox poller.
 Apply migrations from the host:
 
 ```bash
@@ -64,6 +67,13 @@ uv run alembic upgrade head
 uv run pytest --cov=app
 ./scripts/verify.ps1   # format, lint, strict mypy, tests
 uv run python scripts/smoke_ingest.py   # against a running compose stack
+```
+
+Delivery smoke check (starts a local sink, then drives the real poller and worker):
+
+```bash
+uv run uvicorn tests.fixtures.sink:app --port 9099
+uv run python scripts/smoke_delivery.py
 ```
 
 ## Send a signed event
@@ -95,10 +105,37 @@ The first call returns `202 accepted`, an identical retry returns
 Signatures use `HMAC-SHA256(secret, f"{timestamp}.{raw_body}")` and are rejected outside the
 configured tolerance window.
 
+## Deliveries
+
+Add a destination; its signing secret is returned once:
+
+```bash
+curl -s -X POST http://localhost:8000/admin/sources/demo/destinations \
+  -H "X-Admin-Key: $ADMIN_KEY" -H 'Content-Type: application/json' \
+  -d '{"url":"https://example.com/hooks/hookrelay"}'
+```
+
+Accepted events fan out after commit. Every attempt is signed with the destination secret
+and carries `X-HookRelay-Event-Id`, `X-HookRelay-Delivery-Key`, and `X-HookRelay-Attempt`.
+The delivery key is stable across retries and replays, so subscribers can dedupe.
+
+- 2xx: success.
+- 408/425/429/5xx/network/timeout: retried with exponential backoff (2s base, 300s cap,
+  ±20% jitter); `Retry-After` is respected, capped at one hour.
+- Other 4xx: permanent, no retry.
+- After 8 attempts: the delivery is dead-lettered with a reason.
+- `GET /events/{id}` lists every attempt, its status, and the response code.
+
 ## Design decisions
 
-Phase 2+ links ADRs here. The short version: per-source idempotency keys, an outbox
-instead of publish-on-write, and dead letters as a separate table rather than a status flag.
+- **Per-source idempotency keys** — [ADR-001](docs/adr/001-idempotency-scope.md).
+- **Encrypted source secrets** — [ADR-002](docs/adr/002-secret-storage.md).
+- **Transactional outbox instead of publish-on-write** —
+  [ADR-003](docs/adr/003-outbox-pattern.md).
+- **At-least-once delivery, not "exactly once."** Every attempt carries a stable delivery
+  key; consumers dedupe. The outbox guarantees no accepted event is silently lost.
+- **Retry classification is explicit.** Retrying a permanent 4xx would DDoS a broken
+  subscriber, so only 408/425/429/5xx/network errors are retried.
 
 Operational choices already visible in the code:
 

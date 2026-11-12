@@ -125,14 +125,41 @@ including the 100-concurrent-duplicate integration test against service Postgres
 
 ## H3 — Outbox, worker, retries (M2)
 
-- [ ] Destinations, outbox, deliveries schema
-- [ ] Outbox poller with `FOR UPDATE SKIP LOCKED`
-- [ ] ARQ delivery worker with signed headers
-- [ ] Retry classification, backoff, jitter, `Retry-After`
-- [ ] Fake destination tests (success, 4xx, 5xx, timeout)
-- [ ] ADR-003
+- [x] Destinations, outbox, deliveries schema
+- [x] Outbox poller with `FOR UPDATE SKIP LOCKED`
+- [x] ARQ delivery worker with signed headers
+- [x] Retry classification, backoff, jitter, `Retry-After`
+- [x] Fake destination tests (success, 4xx, 5xx, timeout)
+- [x] ADR-003
 
-**Gate evidence:** _pending_
+**Gate evidence**
+
+```
+$ uv run alembic upgrade head
+0002 -> 0003, destinations, deliveries, and dead letters
+
+$ uv run pytest --cov=app
+103 passed; coverage 86.26%
+
+$ uv run python scripts/smoke_delivery.py
+event accepted: b956e6e4-e1df-4f4d-9c24-3011f3f2e706
+event status: delivered
+sink: signature valid, attempt=1 delivery_key=3a6c25d4-60e4-5603-83eb-398888ecd649
+attempts recorded: 1 -> ['success']
+DELIVERY SMOKE PASSED
+
+poller log: {"msg":"poller_tick","published":1,"due":1}
+worker log: delivery:<id> complete in 0.04s
+```
+
+Retry evidence is in `tests/integration/test_delivery.py`: 500,500,200 produces attempts
+1→2→3 with 2s then 4s scheduled delays ±20%; `Retry-After: 7` pushes the next attempt at
+least 7s out; a timeout is retryable; a 400 is permanent; exhaustion with
+`max_attempts=1` creates a dead letter; two destinations produce `partial`; a failed
+enqueue is recovered by `enqueue_due_deliveries`.
+
+ADR: [003-outbox-pattern](adr/003-outbox-pattern.md).
+
 
 ## H4 — DLQ, replay, admin auth (M3)
 
