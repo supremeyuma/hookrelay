@@ -63,7 +63,37 @@ uv run alembic upgrade head
 ```bash
 uv run pytest --cov=app
 ./scripts/verify.ps1   # format, lint, strict mypy, tests
+uv run python scripts/smoke_ingest.py   # against a running compose stack
 ```
+
+## Send a signed event
+
+Create a source. The signing secret is returned exactly once:
+
+```bash
+ADMIN_KEY=$(grep '^ADMIN_API_KEY=' .env | cut -d= -f2)
+curl -s -X POST http://localhost:8000/admin/sources \
+  -H "X-Admin-Key: $ADMIN_KEY" -H 'Content-Type: application/json' \
+  -d '{"slug":"demo","name":"Demo provider"}'
+```
+
+Sign the exact raw body and send it with an idempotency key:
+
+```bash
+BODY='{"type":"charge.succeeded","amount":4200}'
+SIG=$(uv run python scripts/sign.py "$SECRET" "$BODY")
+
+curl -i -X POST http://localhost:8000/ingest/demo \
+  -H "Content-Type: application/json" \
+  -H "X-HookRelay-Signature: $SIG" \
+  -H 'X-Idempotency-Key: evt_001' \
+  -d "$BODY"
+```
+
+The first call returns `202 accepted`, an identical retry returns
+`200 duplicate` with the same event id, and `GET /events/{id}` shows the stored event.
+Signatures use `HMAC-SHA256(secret, f"{timestamp}.{raw_body}")` and are rejected outside the
+configured tolerance window.
 
 ## Design decisions
 

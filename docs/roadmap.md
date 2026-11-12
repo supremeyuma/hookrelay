@@ -83,14 +83,42 @@ Example structured log line:
 
 ## H2 — Ingest, HMAC, idempotency (M1)
 
-- [ ] Sources/events models + migration
-- [ ] HMAC verification with timestamp tolerance
-- [ ] Body cap, validation, per-source rate limit
-- [ ] `ON CONFLICT DO NOTHING` dedupe
-- [ ] Concurrency test: 100 duplicates → one event
-- [ ] ADR-001, ADR-002
+- [x] Sources/events models + migration (outbox table included, used in H3)
+- [x] HMAC verification with timestamp tolerance
+- [x] Body cap, validation, per-source rate limit
+- [x] `ON CONFLICT DO NOTHING` dedupe
+- [x] Concurrency test: 100 duplicates → one event
+- [x] ADR-001, ADR-002
 
-**Gate evidence:** _pending_
+**Gate evidence**
+
+```
+$ uv run alembic upgrade head
+Running upgrade 0001 -> 0002, sources, events, and outbox
+
+$ uv run pytest --cov=app
+55 passed; coverage 86.62%
+
+$ uv run python scripts/smoke_ingest.py
+source: smoke-1794476845 created
+first:  202 {'status': 'accepted', 'event_id': '3d89420d-...'}
+second: 200 {'status': 'duplicate', 'event_id': '3d89420d-...'}
+event:  status=pending amount=4200 signature_stored=False
+stale:  401 {'detail': 'invalid signature'}
+SMOKE PASSED
+
+$ docker compose exec -T postgres psql ... -tAc "select count(*) ..."
+events=1
+outbox=1
+```
+
+The concurrency test sends 100 identical signed requests with 20 worker threads and asserts
+exactly one `202`, ninety-nine `200`, one event row, and one outbox row. The rate-limit test
+asserts a `429` with `Retry-After` for a 1 rps / burst 1 source.
+
+ADRs: [001-idempotency-scope](adr/001-idempotency-scope.md),
+[002-secret-storage](adr/002-secret-storage.md).
+
 
 ## H3 — Outbox, worker, retries (M2)
 
