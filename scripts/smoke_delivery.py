@@ -36,7 +36,7 @@ def main() -> int:
 
         created = client.post(
             f"{api_base}/admin/sources",
-            headers={"X-Admin-Key": settings.admin_api_key},
+            headers={"X-API-Key": settings.admin_api_key},
             json={"slug": slug, "name": "Delivery smoke"},
         )
         created.raise_for_status()
@@ -44,7 +44,7 @@ def main() -> int:
 
         destination = client.post(
             f"{api_base}/admin/sources/{slug}/destinations",
-            headers={"X-Admin-Key": settings.admin_api_key},
+            headers={"X-API-Key": settings.admin_api_key},
             json={"url": destination_url},
         )
         destination.raise_for_status()
@@ -70,7 +70,10 @@ def main() -> int:
         status = "pending"
         detail: dict[str, object] = {}
         while time.time() < deadline:
-            response = client.get(f"{api_base}/events/{event_id}")
+            response = client.get(
+                f"{api_base}/events/{event_id}",
+                headers={"X-API-Key": settings.admin_api_key},
+            )
             response.raise_for_status()
             detail = response.json()
             status = str(detail["status"])

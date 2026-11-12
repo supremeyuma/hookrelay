@@ -33,7 +33,7 @@ def main() -> int:
     with httpx.Client(base_url=base_url, timeout=10.0) as client:
         created = client.post(
             "/admin/sources",
-            headers={"X-Admin-Key": settings.admin_api_key},
+            headers={"X-API-Key": settings.admin_api_key},
             json={"slug": slug, "name": "Smoke test"},
         )
         created.raise_for_status()
@@ -63,7 +63,7 @@ def main() -> int:
             return 1
 
         event_id = first.json()["event_id"]
-        detail = client.get(f"/events/{event_id}")
+        detail = client.get(f"/events/{event_id}", headers={"X-API-Key": settings.admin_api_key})
         detail.raise_for_status()
         payload = detail.json()
         print(
