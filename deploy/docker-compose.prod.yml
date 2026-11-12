@@ -1,0 +1,108 @@
+name: hookrelay-prod
+
+x-app: &app
+  image: hookrelay:1.0.0
+  build:
+    context: ..
+  env_file:
+    - ../.env
+  restart: unless-stopped
+  environment:
+    DATABASE_URL: postgresql+asyncpg://hookrelay:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/hookrelay
+    REDIS_URL: redis://redis:6379/0
+    OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hookrelay
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: hookrelay
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hookrelay -d hookrelay"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    <<: *app
+    command:
+      [
+        "sh",
+        "-c",
+        "rm -rf /tmp/prometheus && mkdir -p /tmp/prometheus && uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-access-log --workers ${WEB_CONCURRENCY:-4}",
+      ]
+    environment:
+      DATABASE_URL: postgresql+asyncpg://hookrelay:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@postgres:5432/hookrelay
+      REDIS_URL: redis://redis:6379/0
+      OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-}
+      PROMETHEUS_MULTIPROC_DIR: /tmp/prometheus
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=2)",
+        ]
+      interval: 15s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
+
+  worker:
+    <<: *app
+    command: ["arq", "app.workers.settings.WorkerSettings"]
+    healthcheck:
+      disable: true
+
+  poller:
+    <<: *app
+    command: ["python", "-m", "app.workers.poller"]
+    healthcheck:
+      disable: true
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddydata:/data
+      - caddyconfig:/config
+
+volumes:
+  pgdata:
+  redisdata:
+  caddydata:
+  caddyconfig:
